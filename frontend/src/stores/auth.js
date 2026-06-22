@@ -14,7 +14,7 @@ function persist() {
   else localStorage.removeItem(USER_KEY);
 }
 
-async function restore() {
+function restore() {
   try {
     const rawS = localStorage.getItem(SESSION_KEY);
     const rawU = localStorage.getItem(USER_KEY);

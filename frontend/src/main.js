@@ -4,6 +4,6 @@ import router from './router/index.js';
 import { auth } from './stores/auth.js';
 import './assets/notepad.css';
 
-await auth.restore();
+auth.restore();
 
 createApp(App).use(router).mount('#app');

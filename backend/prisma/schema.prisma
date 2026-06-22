@@ -1,0 +1,42 @@
+generator client {
+  provider      = "prisma-client-js"
+  // Vercel serverless functions run on Amazon Linux 2 / OpenSSL 3.0 — that
+  // binary target must be packaged with the client.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Profile.username and Profile.email both get unique B-tree indexes from
+// @unique automatically — no extra @@index needed for their lookups.
+model Profile {
+  id           String   @id @default(uuid()) @db.Uuid
+  username     String   @unique
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  todos Todo[]
+
+  @@map("profiles")
+}
+
+// The hot query is `where userId = ? order by createdAt asc` — a composite
+// index on (userId, createdAt) lets Postgres satisfy both the filter and the
+// sort with a single index scan.
+model Todo {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  title       String
+  isCompleted Boolean  @default(false) @map("is_completed")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("todos")
+}
